@@ -2,7 +2,7 @@
     "private": true,
     "scripts": {
         "clean": "rm -rf out ; rm -rf dist",
-        "build": "fable-splitter --config splitter.config.js",
+        "splitter": "fable-splitter --config splitter.config.js",
         "webpack": "webpack",
         "start": "webpack-dev-server",
         "test": "echo \"Error: no test specified\" && exit 1"

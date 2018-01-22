@@ -1,7 +1,103 @@
-# Fable Simple Template
+# Integrating Fable Into Legacy Project
 
-This template can be used to generate a simple web app with [Fable](http://fable.io/).
-You can find more templates by searching `Fable.Template` packages in [Nuget](https://www.nuget.org).
+
+Let's say you have an older website but want to integrate Fable into that website.  Most javascript tutorials seem to be under the impression you would like to do greenfield or SPA type applications.  Also it may be the case that terminology across these languages is becoming difficult to map to and from.
+
+In our scenario here, we have a multipage application that has the notion of a javascript file per page.   Something like:
+
+```
+ tree
+.
+├── pages
+│   ├── feature1
+│   │   ├── details.cshtml
+│   │   └── list.cshtml
+│   └── feature2
+│       ├── dashboard.cshtml
+│       └── ticker.cshtml
+└── scripts
+    ├── feature1
+    │   ├── details.js
+    │   └── list.js
+    ├── feature2
+    │   ├── dashboard.js
+    │   └── ticker.js
+    └── someGlobalFileBecauseLegacy.js
+
+```
+
+What we want to do is start migrating those javascript files to F# Fable but not have to retool our entire stack.  To do this we'll need a combo of different techniques.
+
+We'll need to use [webpack](https://webpack.js.org) because [bundling is a good idea](https://medium.com/@andrejsabrickis/modern-approach-of-javascript-bundling-with-webpack-3b7b3e5f4e7). Webpack doesn't know anything about Fable but, it allows people a way to teach webpack about how to process files called [loaders](https://webpack.js.org/loaders/)  The problem is that [fable-loader](https://www.npmjs.com/package/fable-loader) expects a single `entrypoint`.  Now what exactly is an `entrypoint`?  In a single page application it's basically the file with the notion of a `main` function. In our case it will be every single page.  And to achieve our goal of 1 javascript file per page, we'd need to create an fsproj per page.  Seems overkill. 
+
+However Fable supplies a tool [fable-spliiter](https://www.npmjs.com/package/fable-splitter) that "compiles F# files to individual JS files." Now this sounds like what we want, but it doesn't do the bundling that webpack gives us.  So the goal of this repo is to show how to use both to get the effect we're looking for.
+
+Let's quickly look at the project structure for this
+
+```
+.
+├── FableTestSplitter.fsproj
+├── Main.fs
+├── Pages
+│   ├── feature1
+│   │   └── list.fs
+│   └── feature2
+│       └── dashboard.fs
+├── SomeSharedCode.fs
+└── paket.references
+```
+
+We all the javascript files we'll eventually replace in a tree structure similar to what we had before but as F# files. WARNING: Currently we have to references all files in Main.fs because `allFiles` [is broke currently](https://github.com/fable-compiler/Fable/issues/1165) but should be fixed soon. 
+
+
+Now let's run fable splitter. To get started we'll need to use the fable dotnet tool and we'll need to run it from the directory with our fsproj file. `cd src && dotnet restore` then `dotnet fable npm-run splitter`.  This will run the `splitter` script in `package.json` with the fable daemon started.  
+
+
+Output: 
+
+```
+npm run splitter
+
+> @ splitter /Users/jimmybyrd/Documents/GitHub/FableTestSplitter
+> fable-splitter --config splitter.config.js
+
+fable: Compilation started at 1:16:55 PM
+ Parsing ./FableTestSplitter.fsproj...
+fable: Compiled src/Main.fs
+fable: Compiled src/Pages/App.fs
+fable: Compiled src/SomeSharedCode.fs
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/String.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Date.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/RegExp.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Util.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Symbol.js
+fable: Compiled src/Pages/Counter.fs
+fable: Compiled ../../../.nuget/packages/fable.elmish/1.0.1/fable/program.fs
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/List.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/ListClass.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Map.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Comparer.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Option.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Seq.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Array.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/CurriedLambda.js
+fable: Compiled ../../../.nuget/packages/fable.elmish/1.0.1/fable/cmd.fs
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Async.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/AsyncBuilder.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Choice.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Serialize.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/DateOffset.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Reflection.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Set.js
+fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/MailboxProcessor.js
+fable: Compiled ../../../.nuget/packages/fable.elmish.react/1.0.0/fable/react.fs
+fable: Compiled ../../../.nuget/packages/fable.elmish.react/1.0.0/fable/common.fs
+fable: Compilation succeeded at 1:17:16 PM (21.141 s)
+```
+
+
+
+
 
 ## Requirements
 
