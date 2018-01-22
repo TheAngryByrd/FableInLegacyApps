@@ -52,51 +52,69 @@ We all the javascript files we'll eventually replace in a tree structure similar
 
 Now let's run fable splitter. To get started we'll need to use the fable dotnet tool and we'll need to run it from the directory with our fsproj file. `cd src && dotnet restore` then `dotnet fable npm-run splitter`.  This will run the `splitter` script in `package.json` with the fable daemon started.  
 
-
-Output: 
+Our output directory ends up looking like:
 
 ```
-npm run splitter
+Awaiting bugfix https://github.com/fable-compiler/Fable/issues/1333
+```
 
-> @ splitter /Users/jimmybyrd/Documents/GitHub/FableTestSplitter
-> fable-splitter --config splitter.config.js
+So we have all the F# files we want transpiled to javascript.  Now we need to run the webpack bundler over them so we can pull in the required modules.  `dotnet fable npm-run webpack`
 
-fable: Compilation started at 1:16:55 PM
- Parsing ./FableTestSplitter.fsproj...
-fable: Compiled src/Main.fs
-fable: Compiled src/Pages/App.fs
-fable: Compiled src/SomeSharedCode.fs
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/String.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Date.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/RegExp.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Util.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Symbol.js
-fable: Compiled src/Pages/Counter.fs
-fable: Compiled ../../../.nuget/packages/fable.elmish/1.0.1/fable/program.fs
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/List.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/ListClass.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Map.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Comparer.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Option.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Seq.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Array.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/CurriedLambda.js
-fable: Compiled ../../../.nuget/packages/fable.elmish/1.0.1/fable/cmd.fs
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Async.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/AsyncBuilder.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Choice.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Serialize.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/DateOffset.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Reflection.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/Set.js
-fable: Compiled ../../../.nuget/packages/fable.core/1.3.7/fable-core/MailboxProcessor.js
-fable: Compiled ../../../.nuget/packages/fable.elmish.react/1.0.0/fable/react.fs
-fable: Compiled ../../../.nuget/packages/fable.elmish.react/1.0.0/fable/common.fs
-fable: Compilation succeeded at 1:17:16 PM (21.141 s)
+
+```
+Awaiting bugfix https://github.com/fable-compiler/Fable/issues/1333
+```
+
+So now we have javascript suitable to be used in the browser. Cool! So what magic did we use to achieve this output? In the `webpack.config.js` , we'll need to set [multiple entry points](https://webpack.js.org/concepts/entry-points/#multi-page-application) dynamically by using the glob pattern matching:
+
+```
+var pageJs =
+    glob.sync("./out/Pages/**/*.js")
+    .reduce(
+        (acc, fileToPack) => {
+            let outFile =
+                fileToPack
+                .split('Pages/')[1] //Get only the page specific files
+                .replace(/\.[^/.]+$/, "") //Remove the extension
+            acc["Pages/" + outFile] = fileToPack
+            return acc;
+
+        }, {})
+```
+
+Then to tell webpack to output each entrypoint by name we have to use this `[name].bundle.js` template.
+
+```
+module.exports = {
+    entry: pageJs,
+    output: {
+        filename: '[name].bundle.js',
+        path: __dirname + '/dist'
+    }, ... rest of file
 ```
 
 
+Then to pack up all the vendor stuff into a common library we'll use the [CommonChunkPlugin](https://webpack.js.org/plugins/commons-chunk-plugin/)
 
+```
+plugins: [
+        new webpack.optimize.CommonsChunkPlugin({
+            name: "vendor",
+            //https://jeremygayed.com/dynamic-vendor-bundling-in-webpack-528993e48aab
+            minChunks: ({
+                resource
+            }) => {
+
+                return /node_modules/.test(resource) //put into vendor chunk if node_modules
+                    ||
+                    /out\/fable/.test(resource);
+            }
+
+        })
+    ],
+```
+
+This will pull all fable and node_module depedencies into a vendor bundle so we don't have to reference it once.  
 
 
 ## Requirements

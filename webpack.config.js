@@ -39,7 +39,7 @@ module.exports = {
             minChunks: ({
                 resource
             }) => {
-                console.log("==>" + resource);
+
                 return /node_modules/.test(resource) //put into vendor chunk if node_modules
                     ||
                     /out\/fable/.test(resource);
