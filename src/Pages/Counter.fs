@@ -1,6 +1,8 @@
 namespace FableTestSplitter
 
-module Thing  =
+open SharedCode
+
+module Counter  =
 
     (**
      - title: Counter
@@ -35,7 +37,8 @@ module Thing  =
     // VIEW (rendered with React)
 
     let view model dispatch =
-
+      
+      printer "lol"
       R.div []
           [ R.button [ OnClick (fun _ -> dispatch Decrement) ] [ R.str "-" ]
             R.div [] [ R.str (sprintf "%A" model) ]

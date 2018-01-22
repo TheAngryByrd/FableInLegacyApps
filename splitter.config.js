@@ -5,19 +5,18 @@ function resolve(relativePath) {
     return path.join(__dirname, relativePath);
 }
 
+var babelOptions = fableUtils.resolveBabelOptions({
+    "presets": [
+        ["env", {
+            "modules": false
+        }]
+    ]
+});
+
 module.exports = {
+
+    allFiles: true,
     entry: resolve("src/FableTestSplitter.fsproj"),
     outDir: resolve("out"),
-    // fable: {
-    //     define: ["DEBUG"]
-    // },
-    // babel: fableUtils.resolveBabelOptions({
-    //     presets: [
-    //         ["es2015", {
-    //             modules: false
-    //         }]
-    //     ],
-    //     sourceMaps: true,
-    // }),
-    allFiles: true
+    babel: babelOptions
 }

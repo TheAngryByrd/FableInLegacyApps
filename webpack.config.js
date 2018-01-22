@@ -7,12 +7,15 @@ var glob = require("glob");
 var pageJs =
     glob.sync("./out/Pages/**/*.js")
     .reduce(
-        (acc, next) => {
-            let outFile = next.split('Pages/')[1].replace(/\.[^/.]+$/, "")
-            acc["Pages/" + outFile] = next
+        (acc, fileToPack) => {
+            let outFile =
+                fileToPack
+                .split('Pages/')[1] //Get only the page specific files
+                .replace(/\.[^/.]+$/, "") //Remove the extension
+            acc["Pages/" + outFile] = fileToPack
             return acc;
 
-        }, {}) //.map(pageFilePath => 
+        }, {})
 
 
 var babelOptions = fableUtils.resolveBabelOptions({
@@ -32,12 +35,16 @@ module.exports = {
     plugins: [
         new webpack.optimize.CommonsChunkPlugin({
             name: "vendor",
-            // filename: "vendor.js"
-            // (Give the chunk a different name)
+            //https://jeremygayed.com/dynamic-vendor-bundling-in-webpack-528993e48aab
+            minChunks: ({
+                resource
+            }) => {
+                console.log("==>" + resource);
+                return /node_modules/.test(resource) //put into vendor chunk if node_modules
+                    ||
+                    /out\/fable/.test(resource);
+            }
 
-            minChunks: Infinity,
-            // (with more entries, this ensures that no other module
-            //  goes into the vendor chunk)
         })
     ],
     module: {

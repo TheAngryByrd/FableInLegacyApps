@@ -3,8 +3,10 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>  
-    <!-- <Compile Include="Pages/App.fs" />     -->
+  
+    <Compile Include="SomeSharedCode.fs" />
     <Compile Include="Pages/**/*.fs" />
+    <Compile Include="Main.fs" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
