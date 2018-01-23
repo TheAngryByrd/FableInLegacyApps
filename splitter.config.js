@@ -17,6 +17,6 @@ module.exports = {
 
     allFiles: true,
     entry: resolve("src/FableTestSplitter.fsproj"),
-    outDir: resolve("out"),
+    outDir: resolve("out/Pages"),
     babel: babelOptions
 }
