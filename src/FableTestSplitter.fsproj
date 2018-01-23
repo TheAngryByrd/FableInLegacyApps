@@ -6,7 +6,10 @@
   
     <Compile Include="SomeSharedCode.fs" />
     <Compile Include="Pages/**/*.fs" />
-    <Compile Include="Main.fs" />
+    <!-- <Compile Include="Pages/feature2/dashboard.fs" />
+    
+    <Compile Include="Pages/feature1/list2.fs" /> -->
+    <!-- <Compile Include="Main.fs" /> -->
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

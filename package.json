@@ -12,11 +12,12 @@
         "babel-loader": "7.1.2",
         "babel-preset-env": "1.6.1",
         "fable-loader": "1.1.6",
-        "fable-splitter": "0.1.20",
+        "fable-splitter": "0.1.21",
         "fable-utils": "1.0.6",
         "glob": "^7.1.2",
-        "webpack": "3.8.1",
-        "webpack-dev-server": "2.9.4"
+        "uglifyjs-webpack-plugin": "^1.1.6",
+        "webpack": "3.10.0",
+        "webpack-dev-server": "2.11.1"
     },
     "dependencies": {
         "react": "^16.2.0",

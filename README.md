@@ -55,14 +55,116 @@ Now let's run fable splitter. To get started we'll need to use the fable dotnet 
 Our output directory ends up looking like:
 
 ```
-Awaiting bugfix https://github.com/fable-compiler/Fable/issues/1333
+├── Date
+│   ├── Format.js
+│   ├── Format.js.map
+│   ├── Local.js
+│   └── Local.js.map
+├── Pages
+│   ├── feature1
+│   │   ├── list.js
+│   │   └── list.js.map
+│   └── feature2
+│       ├── dashboard.js
+│       └── dashboard.js.map
+├── PromiseSeq
+│   ├── Extensions.js
+│   ├── Extensions.js.map
+│   ├── Module.js
+│   ├── Module.js.map
+│   ├── Type.js
+│   └── Type.js.map
+├── SomeSharedCode.js
+├── SomeSharedCode.js.map
+├── fable
+│   ├── Fable.Helpers.React.js
+│   ├── Fable.Helpers.React.js.map
+│   ├── Fable.Import.React.js
+│   ├── Fable.Import.React.js.map
+│   ├── cmd.js
+│   ├── cmd.js.map
+│   ├── common.js
+│   ├── common.js.map
+│   ├── program.js
+│   ├── program.js.map
+│   ├── react-native.js
+│   ├── react-native.js.map
+│   ├── react.js
+│   └── react.js.map
+├── fable-core
+│   ├── Array.js
+│   ├── Array.js.map
+│   ├── Async.js
+│   ├── Async.js.map
+│   ├── AsyncBuilder.js
+│   ├── AsyncBuilder.js.map
+│   ├── Choice.js
+│   ├── Choice.js.map
+│   ├── Comparer.js
+│   ├── Comparer.js.map
+│   ├── CurriedLambda.js
+│   ├── CurriedLambda.js.map
+│   ├── Date.js
+│   ├── Date.js.map
+│   ├── DateOffset.js
+│   ├── DateOffset.js.map
+│   ├── List.js
+│   ├── List.js.map
+│   ├── ListClass.js
+│   ├── ListClass.js.map
+│   ├── MailboxProcessor.js
+│   ├── MailboxProcessor.js.map
+│   ├── Map.js
+│   ├── Map.js.map
+│   ├── Option.js
+│   ├── Option.js.map
+│   ├── Reflection.js
+│   ├── Reflection.js.map
+│   ├── RegExp.js
+│   ├── RegExp.js.map
+│   ├── Result.js
+│   ├── Result.js.map
+│   ├── Seq.js
+│   ├── Seq.js.map
+│   ├── Serialize.js
+│   ├── Serialize.js.map
+│   ├── Set.js
+│   ├── Set.js.map
+│   ├── String.js
+│   ├── String.js.map
+│   ├── Symbol.js
+│   ├── Symbol.js.map
+│   ├── Util.js
+│   └── Util.js.map
+└── src
+    ├── BrowserLocalStorage.js
+    ├── BrowserLocalStorage.js.map
+    ├── Fetch.js
+    ├── Fetch.js.map
+    ├── IndexedDB.js
+    ├── IndexedDB.js.map
+    ├── Json.1.js
+    ├── Json.1.js.map
+    ├── Json.js
+    ├── Json.js.map
+    ├── Keyboard.js
+    ├── Keyboard.js.map
+    ├── Promise.js
+    ├── Promise.js.map
+    ├── Result.js
+    └── Result.js.map
 ```
 
-So we have all the F# files we want transpiled to javascript.  Now we need to run the webpack bundler over them so we can pull in the required modules.  `dotnet fable npm-run webpack`
+This contains all the files related to our project that get compiled out.  It does seem like a lot but don't worry, we'll let webpack handle reducing the list.    Now we need to run the webpack bundler over them so we can pull in the required modules.  `dotnet fable npm-run webpack`
 
 
 ```
-Awaiting bugfix https://github.com/fable-compiler/Fable/issues/1333
+├── Pages
+│   ├── feature1
+│   │   └── list.bundle.js
+│   └── feature2
+│       └── dashboard.bundle.js
+└── vendor.bundle.js
 ```
 
 So now we have javascript suitable to be used in the browser. Cool! So what magic did we use to achieve this output? In the `webpack.config.js` , we'll need to set [multiple entry points](https://webpack.js.org/concepts/entry-points/#multi-page-application) dynamically by using the glob pattern matching:
