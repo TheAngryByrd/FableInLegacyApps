@@ -96,17 +96,26 @@ So now we have javascript suitable to be used in the browser. Cool! So what magi
 
 ```
 var pageJs =
-    glob.sync("./out/Pages/**/*.js")
+    glob.sync("./src/scripts/**/*.fs")
     .reduce(
         (acc, fileToPack) => {
             let outFile =
                 fileToPack
-                .split('Pages/')[1] //Get only the page specific files
+                .split('scripts/')[1] //Get only the page specific files
                 .replace(/\.[^/.]+$/, "") //Remove the extension
-            acc["Pages/" + outFile] = fileToPack
+            acc["scripts/" + outFile] = fileToPack
             return acc;
 
         }, {})
+```
+
+This will basically create an object similar to:
+
+```
+{
+    "scripts/feature1/list" : "./src/scripts/feature1/list.fs", 
+    "scripts/feature2/dashboard : "./src/scripts/feature2/dashboard.fs"
+}
 ```
 
 Then to tell webpack to output each entrypoint by name we have to use this `[name].bundle.js` template.
@@ -120,7 +129,7 @@ module.exports = {
     }, ... rest of file
 ```
 
-However if we don't send the fable server the fsproj first you get a message like "dashboard.fs doesn't belong to any of loaded projects".  So to do that, we'll post the "path" to fable's server
+However if we don't "prime" the fable server with the fsproj first you get a message like "dashboard.fs doesn't belong to any of loaded projects".  So to do that, we'll post the "path" of our fsproj to fable's server
 
 ```
 let msg = {
@@ -155,7 +164,9 @@ plugins: [
     ],
 ```
 
-This will pull all fable and node_module depedencies into a vendor bundle so we don't have to reference it once.  
+This will pull all nuget and node_module depedencies into a vendor bundle so we only have to reference it once.  
+
+Now you can just copy these files into your old legacy output and reference them like you would normally!
 
 
 ## Requirements
