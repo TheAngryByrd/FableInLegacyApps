@@ -5,7 +5,7 @@
   <ItemGroup>  
   
     <Compile Include="SomeSharedCode.fs" />
-    <Compile Include="Pages/**/*.fs" />
+    <Compile Include="scripts/**/*.fs" />
     <!-- <Compile Include="Pages/feature2/dashboard.fs" />
     
     <Compile Include="Pages/feature1/list2.fs" /> -->
