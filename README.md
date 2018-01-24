@@ -28,9 +28,8 @@ In our scenario here, we have a multipage application that has the notion of a j
 
 What we want to do is start migrating those javascript files to F# Fable but not have to retool our entire stack.  To do this we'll need a combo of different techniques.
 
-We'll need to use [webpack](https://webpack.js.org) because [bundling is a good idea](https://medium.com/@andrejsabrickis/modern-approach-of-javascript-bundling-with-webpack-3b7b3e5f4e7). Webpack doesn't know anything about Fable but, it allows people a way to teach webpack about how to process files called [loaders](https://webpack.js.org/loaders/)  The problem is that [fable-loader](https://www.npmjs.com/package/fable-loader) expects a single `entrypoint`.  Now what exactly is an `entrypoint`?  In a single page application it's basically the file with the notion of a `main` function. In our case it will be every single page.  And to achieve our goal of 1 javascript file per page, we'd need to create an fsproj per page.  Seems overkill. 
+We'll need to use [webpack](https://webpack.js.org) because [bundling is a good idea](https://medium.com/@andrejsabrickis/modern-approach-of-javascript-bundling-with-webpack-3b7b3e5f4e7). Webpack doesn't know anything about Fable but, it allows people a way to teach webpack about how to process files called [loaders](https://webpack.js.org/loaders/)  The problem is that [fable-loader](https://www.npmjs.com/package/fable-loader) expects a single `entrypoint`.  Now what exactly is an `entrypoint`?  In a single page application it's basically the file with the notion of a `main` function. In our case it will be every single page.  And to achieve our goal of 1 javascript file per page, we'd need to create an fsproj per page.  Seems overkill. Well theres another way to go about it.  You can "prime" fable's compiler server with the fsproj then selectively compile them!  We'll see how to do that in a bit.
 
-However Fable supplies a tool [fable-spliiter](https://www.npmjs.com/package/fable-splitter) that "compiles F# files to individual JS files." Now this sounds like what we want, but it doesn't do the bundling that webpack gives us.  So the goal of this repo is to show how to use both to get the effect we're looking for.
 
 Let's quickly look at the project structure for this
 
@@ -38,7 +37,7 @@ Let's quickly look at the project structure for this
 .
 ├── FableTestSplitter.fsproj
 ├── Main.fs
-├── Pages
+├── scripts
 │   ├── feature1
 │   │   └── list.fs
 │   └── feature2
@@ -47,125 +46,51 @@ Let's quickly look at the project structure for this
 └── paket.references
 ```
 
-We all the javascript files we'll eventually replace in a tree structure similar to what we had before but as F# files. WARNING: Currently we have to references all files in Main.fs because `allFiles` [is broke currently](https://github.com/fable-compiler/Fable/issues/1165) but should be fixed soon. 
+This mimics the first couple files we want to replace in our legacy app.
 
+Now let's run webpack. To get started we'll need to use the fable dotnet tool and we'll need to run it from the directory with our fsproj file. `cd src && dotnet restore` then `dotnet fable npm-run webpack`.  
 
-Now let's run fable splitter. To get started we'll need to use the fable dotnet tool and we'll need to run it from the directory with our fsproj file. `cd src && dotnet restore` then `dotnet fable npm-run splitter`.  This will run the `splitter` script in `package.json` with the fable daemon started.  
-
-Our output directory ends up looking like:
+The output...
 
 ```
-├── Date
-│   ├── Format.js
-│   ├── Format.js.map
-│   ├── Local.js
-│   └── Local.js.map
-├── Pages
+Bundling for development...
+Parsing ./FableTestSplitter.fsproj...
+fable: Compiled src/scripts/feature1/list.fs
+fable: Compiled src/scripts/feature2/dashboard.fs
+fable: Compiled src/SomeSharedCode.fs
+fable: Compiled ../../../.nuget/packages/fable.elmish.react/1.0.1/fable/react.fs
+fable: Compiled ../../../.nuget/packages/fable.elmish/1.0.1/fable/program.fs
+fable: Compiled ../../../.nuget/packages/fable.elmish.react/1.0.1/fable/common.fs
+fable: Compiled ../../../.nuget/packages/fable.elmish/1.0.1/fable/cmd.fs
+Hash: 41212c65ea894a9324fb
+Version: webpack 3.10.0
+Time: 5106ms
+                                   Asset     Size  Chunks                    Chunk Names
+    scripts/feature2/dashboard.bundle.js  6.13 kB       0  [emitted]         scripts/feature2/dashboard
+         scripts/feature1/list.bundle.js  1.57 kB       1  [emitted]         scripts/feature1/list
+                        vendor.bundle.js  1.19 MB       2  [emitted]  [big]  vendor
+scripts/feature2/dashboard.bundle.js.map   2.4 kB       0  [emitted]         scripts/feature2/dashboard
+     scripts/feature1/list.bundle.js.map  1.16 kB       1  [emitted]         scripts/feature1/list
+                    vendor.bundle.js.map  1.33 MB       2  [emitted]         vendor
+
+```
+
+And what the tree looks like:
+
+```
+../dist/
+├── scripts
 │   ├── feature1
-│   │   ├── list.js
-│   │   └── list.js.map
+│   │   ├── list.bundle.js
+│   │   └── list.bundle.js.map
 │   └── feature2
-│       ├── dashboard.js
-│       └── dashboard.js.map
-├── PromiseSeq
-│   ├── Extensions.js
-│   ├── Extensions.js.map
-│   ├── Module.js
-│   ├── Module.js.map
-│   ├── Type.js
-│   └── Type.js.map
-├── SomeSharedCode.js
-├── SomeSharedCode.js.map
-├── fable
-│   ├── Fable.Helpers.React.js
-│   ├── Fable.Helpers.React.js.map
-│   ├── Fable.Import.React.js
-│   ├── Fable.Import.React.js.map
-│   ├── cmd.js
-│   ├── cmd.js.map
-│   ├── common.js
-│   ├── common.js.map
-│   ├── program.js
-│   ├── program.js.map
-│   ├── react-native.js
-│   ├── react-native.js.map
-│   ├── react.js
-│   └── react.js.map
-├── fable-core
-│   ├── Array.js
-│   ├── Array.js.map
-│   ├── Async.js
-│   ├── Async.js.map
-│   ├── AsyncBuilder.js
-│   ├── AsyncBuilder.js.map
-│   ├── Choice.js
-│   ├── Choice.js.map
-│   ├── Comparer.js
-│   ├── Comparer.js.map
-│   ├── CurriedLambda.js
-│   ├── CurriedLambda.js.map
-│   ├── Date.js
-│   ├── Date.js.map
-│   ├── DateOffset.js
-│   ├── DateOffset.js.map
-│   ├── List.js
-│   ├── List.js.map
-│   ├── ListClass.js
-│   ├── ListClass.js.map
-│   ├── MailboxProcessor.js
-│   ├── MailboxProcessor.js.map
-│   ├── Map.js
-│   ├── Map.js.map
-│   ├── Option.js
-│   ├── Option.js.map
-│   ├── Reflection.js
-│   ├── Reflection.js.map
-│   ├── RegExp.js
-│   ├── RegExp.js.map
-│   ├── Result.js
-│   ├── Result.js.map
-│   ├── Seq.js
-│   ├── Seq.js.map
-│   ├── Serialize.js
-│   ├── Serialize.js.map
-│   ├── Set.js
-│   ├── Set.js.map
-│   ├── String.js
-│   ├── String.js.map
-│   ├── Symbol.js
-│   ├── Symbol.js.map
-│   ├── Util.js
-│   └── Util.js.map
-└── src
-    ├── BrowserLocalStorage.js
-    ├── BrowserLocalStorage.js.map
-    ├── Fetch.js
-    ├── Fetch.js.map
-    ├── IndexedDB.js
-    ├── IndexedDB.js.map
-    ├── Json.1.js
-    ├── Json.1.js.map
-    ├── Json.js
-    ├── Json.js.map
-    ├── Keyboard.js
-    ├── Keyboard.js.map
-    ├── Promise.js
-    ├── Promise.js.map
-    ├── Result.js
-    └── Result.js.map
-```
-
-This contains all the files related to our project that get compiled out.  It does seem like a lot but don't worry, we'll let webpack handle reducing the list.    Now we need to run the webpack bundler over them so we can pull in the required modules.  `dotnet fable npm-run webpack`
-
+│       ├── dashboard.bundle.js
+│       └── dashboard.bundle.js.map
+├── vendor.bundle.js
+└── vendor.bundle.js.map
 
 ```
-├── Pages
-│   ├── feature1
-│   │   └── list.bundle.js
-│   └── feature2
-│       └── dashboard.bundle.js
-└── vendor.bundle.js
-```
+
 
 So now we have javascript suitable to be used in the browser. Cool! So what magic did we use to achieve this output? In the `webpack.config.js` , we'll need to set [multiple entry points](https://webpack.js.org/concepts/entry-points/#multi-page-application) dynamically by using the glob pattern matching:
 
@@ -195,6 +120,20 @@ module.exports = {
     }, ... rest of file
 ```
 
+However if we don't send the fable server the fsproj first you get a message like "dashboard.fs doesn't belong to any of loaded projects".  So to do that, we'll post the "path" to fable's server
+
+```
+let msg = {
+    path: resolve("./src/FableTestSplitter.fsproj")
+}
+
+
+let preppedFableWithProject = fableUtils.client.send(port, JSON.stringify(msg)).then(() => {
+
+```
+
+Webpack allows you to set the [config as a promise](https://github.com/webpack/webpack/issues/2697) so we're able to do this async call easily.  There's also [other properties](https://github.com/fable-compiler/Fable/blob/master/src/js/fable-loader/index.js#L54) we can set for this call to fable server but for now this gets the job done.
+
 
 Then to pack up all the vendor stuff into a common library we'll use the [CommonChunkPlugin](https://webpack.js.org/plugins/commons-chunk-plugin/)
 
@@ -209,7 +148,7 @@ plugins: [
 
                 return /node_modules/.test(resource) //put into vendor chunk if node_modules
                     ||
-                    /out\/fable/.test(resource);
+                    /.nuget/.test(resource);
             }
 
         })
